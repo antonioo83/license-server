@@ -1,4 +1,4 @@
-module github.com/antonioo83/shot-url-service
+module github.com/antonioo83/license-server
 
 go 1.17
 
