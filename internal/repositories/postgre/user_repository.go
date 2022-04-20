@@ -18,17 +18,19 @@ func NewUserRepository(context context.Context, pool *pgxpool.Pool) interfaces.U
 	return &userRepository{context, pool}
 }
 
-func (u userRepository) Save(model models.User) error {
-	_, err := u.connection.Query(
+func (u userRepository) Save(model models.User) (int, error) {
+	var lastInsertId int
+	err := u.connection.QueryRow(
 		u.context,
-		"INSERT INTO ln_users(code, role, title, auth_token, description)VALUES ($1, $2, $3, $4, $5, NOW())",
+		"INSERT INTO ln_users(code, role, title, auth_token, description)VALUES ($1, $2, $3, $4, $5) RETURNING id",
 		&model.Code, &model.Role, &model.Title, &model.AuthToken, &model.Description,
-	)
-	return err
+	).Scan(&lastInsertId)
+
+	return lastInsertId, err
 }
 
 func (u userRepository) Update(model models.User) error {
-	_, err := u.connection.Query(
+	_, err := u.connection.Exec(
 		u.context,
 		"UPDATE ln_users SET role=$2, title=$3, auth_token=$4, description=$5, updated_at=NOW()) WHERE code=$1 AND deleted_at IS NULL",
 		&model.Code, &model.Role, &model.Title, &model.AuthToken, &model.Description,
@@ -37,7 +39,7 @@ func (u userRepository) Update(model models.User) error {
 }
 
 func (u userRepository) Delete(code string) error {
-	_, err := u.connection.Query(u.context, "UPDATE ln_users SET deleted_at=NOW() WHERE code=$1 AND deleted_at IS NULL", code)
+	_, err := u.connection.Exec(u.context, "UPDATE ln_users SET deleted_at=NOW() WHERE code=$1 AND deleted_at IS NULL", code)
 
 	return err
 }
