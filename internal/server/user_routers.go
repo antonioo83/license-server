@@ -7,7 +7,7 @@ import (
 )
 
 func getCreateUserRoute(r *chi.Mux, params handlers.UserRouteParameters) *chi.Mux {
-	r.Post("/", func(w http.ResponseWriter, r *http.Request) {
+	r.Post("/api/v1/users", func(w http.ResponseWriter, r *http.Request) {
 		handlers.GetCreatedUserResponse(r, w, params)
 	})
 
@@ -15,7 +15,7 @@ func getCreateUserRoute(r *chi.Mux, params handlers.UserRouteParameters) *chi.Mu
 }
 
 func getUpdateUserRoute(r *chi.Mux, params handlers.UserRouteParameters) *chi.Mux {
-	r.Post("/", func(w http.ResponseWriter, r *http.Request) {
+	r.Put("/", func(w http.ResponseWriter, r *http.Request) {
 		handlers.GetCreatedUserResponse(r, w, params)
 	})
 
@@ -23,7 +23,7 @@ func getUpdateUserRoute(r *chi.Mux, params handlers.UserRouteParameters) *chi.Mu
 }
 
 func getDeleteUserRoute(r *chi.Mux, params handlers.UserRouteParameters) *chi.Mux {
-	r.Post("/", func(w http.ResponseWriter, r *http.Request) {
+	r.Delete("/", func(w http.ResponseWriter, r *http.Request) {
 		handlers.GetCreatedUserResponse(r, w, params)
 	})
 
@@ -31,7 +31,7 @@ func getDeleteUserRoute(r *chi.Mux, params handlers.UserRouteParameters) *chi.Mu
 }
 
 func getUserRoute(r *chi.Mux, params handlers.UserRouteParameters) *chi.Mux {
-	r.Post("/", func(w http.ResponseWriter, r *http.Request) {
+	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		handlers.GetCreatedUserResponse(r, w, params)
 	})
 
@@ -39,7 +39,7 @@ func getUserRoute(r *chi.Mux, params handlers.UserRouteParameters) *chi.Mux {
 }
 
 func getUsersRoute(r *chi.Mux, params handlers.UserRouteParameters) *chi.Mux {
-	r.Post("/", func(w http.ResponseWriter, r *http.Request) {
+	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		handlers.GetCreatedUserResponse(r, w, params)
 	})
 

@@ -32,7 +32,7 @@ var cfg Config
 
 func GetConfigSettings() Config {
 	const ServerAddress string = ":8080"
-	const DatabaseDSN = "postgres://postgres:433370@localhost:5433/postgres"
+	const DatabaseDSN = "postgres://postgres:433370@localhost:5433/license_server"
 	const AuthEncodeAlgorithm = "HS256"
 	const AuthRememberMeTime = 60 * 30 * time.Second
 	const AuthSignKey = "secret"
