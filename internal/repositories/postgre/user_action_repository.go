@@ -16,9 +16,9 @@ func NewUserActionRepository(context context.Context, pool *pgxpool.Pool) interf
 	return &userActionRepository{context, pool}
 }
 
-func (u userActionRepository) FindALL() ([]models.UserAction, error) {
+func (u userActionRepository) FindALL() (map[string]models.UserAction, error) {
 	var model = models.UserAction{}
-	var models []models.UserAction
+	models := make(map[string]models.UserAction)
 	rows, err := u.connection.Query(
 		u.context,
 		"SELECT id, action, description, created_at, updated_at, deleted_at FROM ln_user_actions LIMIT 100",
@@ -27,11 +27,11 @@ func (u userActionRepository) FindALL() ([]models.UserAction, error) {
 		return nil, err
 	}
 	for rows.Next() {
-		err = rows.Scan(&model)
+		err = rows.Scan(&model.ID, &model.Action, &model.Description, &model.CreatedAt, &model.UpdatedAt, &model.DeletedAt)
 		if err != nil {
 			return nil, err
 		}
-		models = append(models, model)
+		models[model.Action] = model
 	}
 
 	return models, nil
