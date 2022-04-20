@@ -1,5 +1,7 @@
 package models
 
+import "time"
+
 type Licence struct {
 	ID             int
 	CustomerId     int
@@ -7,9 +9,9 @@ type Licence struct {
 	CallbackUrl    string
 	Count          int
 	LicenseKey     string
-	RegistrationAt string
-	ActivationAt   string
-	ExpirationAt   string
+	RegistrationAt time.Time
+	ActivationAt   time.Time
+	ExpirationAt   time.Time
 	Duration       int
-	DeletedAt      string
+	DeletedAt      time.Time
 }
