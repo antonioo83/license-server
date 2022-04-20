@@ -1,0 +1,20 @@
+POST http://localhost:8080/api/v1/users
+Content-Type: application/json
+
+{
+  "userId": "909fdfea-fff1-4dd5-97f7-612cf9840b82",
+  "role": "service",
+  "title": "GwKAVkW",
+  "description": "gxTnbDgtvxjvDDUtOrDntqBXyUEMhwhgFxoqqcPxpoIwBVhplgkBykjkaYOqPPVejprkRLDtNafDIsYERDxoCRsVkyPhauFOKbraPENshjmrtQMvhPuTYwpscslXYdnyMDuwGTMWuDRRAoWxhfeSOZNFuNEHZnQeDpQLmIQhiwQidEfpZGUSTtCcDsgBiPOyYwxevPDWMrCyYIMDoxUKSDjQSnyGJCinwXIfgJrLrgtkyYZQsgPBosQWCIyAYMPv",
+  "products": [
+    {
+      "type": "courier",
+      "permissions": [
+        "create",
+        "update",
+        "delete",
+        "get"
+      ]
+    }
+  ]
+}
