@@ -6,6 +6,7 @@ import (
 	"github.com/antonioo83/license-server/config"
 	"github.com/antonioo83/license-server/internal/models"
 	"github.com/antonioo83/license-server/internal/repositories/interfaces"
+	"github.com/go-playground/validator/v10"
 	"net/http"
 )
 
@@ -18,6 +19,13 @@ type UserRouteParameters struct {
 
 func GetCreatedUserResponse(r *http.Request, w http.ResponseWriter, param UserRouteParameters) {
 	httpRequest, err := getRequest(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	validate := validator.New()
+	err = validate.Struct(httpRequest)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -69,15 +77,15 @@ func getUserPermissions(httpRequest *UserRequest, aRep interfaces.UserActionRepo
 }
 
 type ProductRequest struct {
-	Type        string
-	Permissions [4]string
+	Type        string    `validate:"required,max=50"`
+	Permissions [4]string `validate:"required,oneof='create' 'update' 'delete' 'get'"`
 }
 
 type UserRequest struct {
-	UserId            string
-	Role              string
-	Title             string
-	Description       string
+	UserId            string `validate:"required,max=64"`
+	Role              string `validate:"required,oneof='service' 'device'"`
+	Title             string `validate:"required,max=100"`
+	Description       string `validate:"max=256"`
 	Products          []ProductRequest
 	IsRegenerateToken bool
 }
