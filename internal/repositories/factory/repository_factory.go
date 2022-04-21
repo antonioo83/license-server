@@ -7,8 +7,8 @@ import (
 	"github.com/jackc/pgx/v4/pgxpool"
 )
 
-func NewUserRepository(context context.Context, pool *pgxpool.Pool) interfaces.UserRepository {
-	return postgre.NewUserRepository(context, pool)
+func NewUserRepository(context context.Context, pool *pgxpool.Pool, permissionRep interfaces.UserPermissionRepository) interfaces.UserRepository {
+	return postgre.NewUserRepository(context, pool, permissionRep)
 }
 
 func NewUserPermissionRepository(context context.Context, pool *pgxpool.Pool) interfaces.UserPermissionRepository {

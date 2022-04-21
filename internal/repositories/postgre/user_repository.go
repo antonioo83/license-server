@@ -10,32 +10,69 @@ import (
 )
 
 type userRepository struct {
-	context    context.Context
-	connection *pgxpool.Pool
+	context       context.Context
+	connection    *pgxpool.Pool
+	permissionRep interfaces.UserPermissionRepository
 }
 
-func NewUserRepository(context context.Context, pool *pgxpool.Pool) interfaces.UserRepository {
-	return &userRepository{context, pool}
+func NewUserRepository(context context.Context, pool *pgxpool.Pool, permissionRep interfaces.UserPermissionRepository) interfaces.UserRepository {
+	return &userRepository{context, pool, permissionRep}
 }
 
-func (u userRepository) Save(model models.User) (int, error) {
+func (u userRepository) Save(user models.User, permissions []models.UserPermission) error {
+	tx, err := u.connection.BeginTx(u.context, pgx.TxOptions{})
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if err != nil {
+			tx.Rollback(u.context)
+		} else {
+			tx.Commit(u.context)
+		}
+	}()
+
 	var lastInsertId int
-	err := u.connection.QueryRow(
+	err = u.connection.QueryRow(
 		u.context,
 		"INSERT INTO ln_users(code, role, title, auth_token, description)VALUES ($1, $2, $3, $4, $5) RETURNING id",
-		&model.Code, &model.Role, &model.Title, &model.AuthToken, &model.Description,
+		&user.Code, &user.Role, &user.Title, &user.AuthToken, &user.Description,
 	).Scan(&lastInsertId)
+	if err != nil {
+		return err
+	}
 
-	return lastInsertId, err
+	return u.permissionRep.MultipleInsert(lastInsertId, permissions)
 }
 
-func (u userRepository) Update(model models.User) error {
-	_, err := u.connection.Exec(
+func (u userRepository) Update(model models.User, permissions []models.UserPermission) error {
+	tx, err := u.connection.BeginTx(u.context, pgx.TxOptions{})
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if err != nil {
+			tx.Rollback(u.context)
+		} else {
+			tx.Commit(u.context)
+		}
+	}()
+
+	u.connection.QueryRow(
 		u.context,
 		"UPDATE ln_users SET role=$2, title=$3, auth_token=$4, description=$5, updated_at=NOW()) WHERE code=$1 AND deleted_at IS NULL",
 		&model.Code, &model.Role, &model.Title, &model.AuthToken, &model.Description,
 	)
-	return err
+	if err != nil {
+		return err
+	}
+
+	err = u.permissionRep.Delete(model.ID)
+	if err != nil {
+		return err
+	}
+
+	return u.permissionRep.MultipleInsert(model.ID, permissions)
 }
 
 func (u userRepository) Delete(code string) error {

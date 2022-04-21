@@ -17,34 +17,20 @@ func NewUserPermissionRepository(context context.Context, pool *pgxpool.Pool) in
 	return &userPermissionRepository{context, pool}
 }
 
-func (u userPermissionRepository) Replace(models []models.UserPermission) error {
-	tx, err := u.connection.BeginTx(u.context, pgx.TxOptions{})
-	if err != nil {
-		return err
-	}
-	defer func() {
-		if err != nil {
-			tx.Rollback(u.context)
-		} else {
-			tx.Commit(u.context)
-		}
-	}()
-
+func (u userPermissionRepository) MultipleInsert(userId int, models []models.UserPermission) error {
+	b := &pgx.Batch{}
 	for _, model := range models {
-		_, err = tx.Exec(
-			u.context,
+		b.Queue(
 			"INSERT INTO ln_user_permissions (user_id, action_id, product_type) "+
 				"VALUES ($1, $2, $3) "+
 				"ON CONFLICT (id) DO UPDATE "+
 				"SET user_id = $1, action_id = $2, product_type = $3;",
-			model.UserID, model.ActionID, model.ProductType,
+			userId, model.ActionID, model.ProductType,
 		)
-		if err != nil {
-			return err
-		}
 	}
+	_, err := u.connection.SendBatch(u.context, b).Exec()
 
-	return nil
+	return err
 }
 
 func (u userPermissionRepository) FindALL(userId int) ([]models.UserPermission, error) {
@@ -67,4 +53,10 @@ func (u userPermissionRepository) FindALL(userId int) ([]models.UserPermission, 
 	}
 
 	return models, nil
+}
+
+func (u userPermissionRepository) Delete(userId int) error {
+	_, err := u.connection.Exec(u.context, "DELETE FROM ln_user_permissions WHERE user_id=$1", userId)
+
+	return err
 }

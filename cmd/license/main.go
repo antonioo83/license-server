@@ -17,12 +17,13 @@ func main() {
 
 	pool, _ = pgxpool.Connect(context, config.DatabaseDsn)
 	defer pool.Close()
+	userPermissionRepository := factory.NewUserPermissionRepository(context, pool)
 	routeParameters :=
 		server.RouteParameters{
 			Config:                   config,
-			UserRepository:           factory.NewUserRepository(context, pool),
+			UserRepository:           factory.NewUserRepository(context, pool, userPermissionRepository),
 			UserActionRepository:     factory.NewUserActionRepository(context, pool),
-			UserPermissionRepository: factory.NewUserPermissionRepository(context, pool),
+			UserPermissionRepository: userPermissionRepository,
 		}
 	handler := server.GetRouters(routeParameters)
 	log.Fatal(http.ListenAndServe(config.ServerAddress, handler))

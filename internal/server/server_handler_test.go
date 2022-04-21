@@ -56,12 +56,12 @@ func TestGetRouters(t *testing.T) {
 
 	pool, _ = pgxpool.Connect(context, config.DatabaseDsn)
 	defer pool.Close()
-
+	userPermissionRepository := factory.NewUserPermissionRepository(context, pool)
 	r := GetRouters(RouteParameters{
 		Config:                   config,
-		UserRepository:           factory.NewUserRepository(context, pool),
+		UserRepository:           factory.NewUserRepository(context, pool, userPermissionRepository),
 		UserActionRepository:     factory.NewUserActionRepository(context, pool),
-		UserPermissionRepository: factory.NewUserPermissionRepository(context, pool),
+		UserPermissionRepository: userPermissionRepository,
 	})
 	ts := httptest.NewServer(r)
 	defer ts.Close()
@@ -71,6 +71,7 @@ func TestGetRouters(t *testing.T) {
 		if err != nil {
 			log.Fatal(err)
 		}
+		tt.request.Products[0].Permissions = [4]string{"create", "update", "delete", "get"}
 
 		request, err := getJSONRequest(tt.request)
 		assert.NoError(t, err)
