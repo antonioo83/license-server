@@ -21,16 +21,17 @@ func (u userPermissionRepository) MultipleInsert(userId int, models []models.Use
 	b := &pgx.Batch{}
 	for _, model := range models {
 		b.Queue(
-			"INSERT INTO ln_user_permissions (user_id, action_id, product_type) "+
-				"VALUES ($1, $2, $3) "+
-				"ON CONFLICT (id) DO UPDATE "+
-				"SET user_id = $1, action_id = $2, product_type = $3;",
+			"INSERT INTO ln_user_permissions (user_id, action_id, product_type) VALUES ($1, $2, $3)",
 			userId, model.ActionID, model.ProductType,
 		)
 	}
-	_, err := u.connection.SendBatch(u.context, b).Exec()
+	r := u.connection.SendBatch(u.context, b)
+	_, err := r.Exec()
+	if err != nil {
+		return err
+	}
 
-	return err
+	return r.Close()
 }
 
 func (u userPermissionRepository) FindALL(userId int) ([]models.UserPermission, error) {
