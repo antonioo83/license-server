@@ -162,8 +162,59 @@ func GetUpdatedUserResponse(param UserRouteParameters) {
 
 }
 
-func GetDeletedUserResponse(param UserRouteParameters) {
+type UserDeleteRequest struct {
+	UserId string `validate:"required,max=64"`
+}
 
+func GetDeletedUserResponse(r *http.Request, w http.ResponseWriter, param UserRouteParameters) {
+	httpRequest, err := getDeleteRequest(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	validate := validator.New()
+	err = validate.Struct(httpRequest)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	isExist, err := param.UserRepository.IsInDatabase(httpRequest.UserId)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if !isExist {
+		http.Error(
+			w,
+			fmt.Errorf("this user isn't exist, orderId=%s", httpRequest.UserId).Error(),
+			http.StatusInternalServerError,
+		)
+		return
+	}
+
+	//userAuth := r.Context().Value("userAuth")
+	//u := userAuth.(*auth.UserAuth)
+	err = param.UserRepository.Delete(httpRequest.UserId)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Add("Content-Type", "application/json")
+	w.WriteHeader(http.StatusAccepted)
+}
+
+func getDeleteRequest(r *http.Request) (*UserDeleteRequest, error) {
+	var request UserDeleteRequest
+	decoder := json.NewDecoder(r.Body)
+	err := decoder.Decode(&request)
+	if err != nil {
+		return nil, fmt.Errorf("i can't decode json request: %w", err)
+	}
+
+	return &request, nil
 }
 
 func GetUserResponse(param UserRouteParameters) {

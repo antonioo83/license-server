@@ -23,8 +23,8 @@ func getUpdateUserRoute(r *chi.Mux, params handlers.UserRouteParameters) *chi.Mu
 }
 
 func getDeleteUserRoute(r *chi.Mux, params handlers.UserRouteParameters) *chi.Mux {
-	r.Delete("/", func(w http.ResponseWriter, r *http.Request) {
-		handlers.GetCreatedUserResponse(r, w, params)
+	r.Delete("/api/v1/users", func(w http.ResponseWriter, r *http.Request) {
+		handlers.GetDeletedUserResponse(r, w, params)
 	})
 
 	return r

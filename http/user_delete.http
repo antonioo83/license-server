@@ -1,0 +1,5 @@
+DELETE http://localhost:8080/api/v1/users
+Content-Type: application/json
+Authorization:Bearer 54d1ba805e2a4891aeac9299b618945e
+
+{"userId": "909fdfea-fff1-4dd5-97f7-612cf9840b-1"}
