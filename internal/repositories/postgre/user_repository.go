@@ -85,9 +85,25 @@ func (u userRepository) FindByCode(code string) (*models.User, error) {
 	var model models.User
 	err := u.connection.QueryRow(
 		u.context,
-		"SELECT id, code, role, title, auth_token, description, created_at, updated_at, deleted_at FROM ln_users WHERE code=$1 AND deleted_at IS NULL",
+		"SELECT id, code, role, title, auth_token, description, created_at FROM ln_users WHERE code=$1 AND deleted_at IS NULL",
 		code,
-	).Scan(&model)
+	).Scan(&model.ID, &model.Code, &model.Role, &model.Title, &model.AuthToken, &model.Description, &model.CreatedAt)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, nil
+	} else if err != nil {
+		return nil, err
+	}
+
+	return &model, nil
+}
+
+func (u userRepository) FindByToken(code string) (*models.User, error) {
+	var model models.User
+	err := u.connection.QueryRow(
+		u.context,
+		"SELECT id, code, role, title, description, created_at FROM ln_users WHERE auth_token=$1 AND deleted_at IS NULL",
+		code,
+	).Scan(&model.ID, &model.Code, &model.Role, &model.Title, &model.Description, &model.CreatedAt)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil
 	} else if err != nil {

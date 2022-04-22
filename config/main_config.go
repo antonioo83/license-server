@@ -4,7 +4,6 @@ import (
 	"flag"
 	"github.com/caarlos0/env/v6"
 	"log"
-	"time"
 )
 
 type Config struct {
@@ -13,19 +12,10 @@ type Config struct {
 	DatabaseDsn      string `env:"DATABASE_DSN"`
 	FilepathToDBDump string
 	Auth             Auth
-	DeleteShotURL    DeleteShotURL
 }
 
 type Auth struct {
-	Alg            string
-	RememberMeTime time.Duration
-	SignKey        []byte
-	TokenName      string
-}
-
-type DeleteShotURL struct {
-	WorkersCount int
-	ChunkLength  int
+	AdminAuthToken string
 }
 
 var cfg Config
@@ -33,10 +23,7 @@ var cfg Config
 func GetConfigSettings() Config {
 	const ServerAddress string = ":8080"
 	const DatabaseDSN = "postgres://postgres:433370@localhost:5433/license_server"
-	const AuthEncodeAlgorithm = "HS256"
-	const AuthRememberMeTime = 60 * 30 * time.Second
-	const AuthSignKey = "secret"
-	const AuthTokenName = "token"
+	const AdminAuthToken = "54d1ba805e2a4891aeac9299b618945e"
 
 	err := env.Parse(&cfg)
 	if err != nil {
@@ -55,13 +42,7 @@ func GetConfigSettings() Config {
 		cfg.DatabaseDsn = DatabaseDSN
 	}
 
-	cfg.Auth.Alg = AuthEncodeAlgorithm
-	cfg.Auth.RememberMeTime = AuthRememberMeTime
-	cfg.Auth.SignKey = []byte(AuthSignKey)
-	cfg.Auth.TokenName = AuthTokenName
-
-	cfg.DeleteShotURL.ChunkLength = 10
-	cfg.DeleteShotURL.WorkersCount = 1
+	cfg.Auth.AdminAuthToken = AdminAuthToken
 
 	return cfg
 }

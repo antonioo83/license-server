@@ -6,8 +6,11 @@ import (
 	"github.com/antonioo83/license-server/config"
 	"github.com/antonioo83/license-server/internal/models"
 	"github.com/antonioo83/license-server/internal/repositories/interfaces"
+	"github.com/antonioo83/license-server/internal/utils"
 	"github.com/go-playground/validator/v10"
+	"github.com/google/uuid"
 	"net/http"
+	"strings"
 )
 
 type UserRouteParameters struct {
@@ -24,10 +27,26 @@ func GetCreatedUserResponse(r *http.Request, w http.ResponseWriter, param UserRo
 		return
 	}
 
+	//userAuth := r.Context().Value("userAuth")
+
 	validate := validator.New()
 	err = validate.Struct(httpRequest)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	isExist, err := param.UserRepository.IsInDatabase(httpRequest.UserId)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if isExist {
+		http.Error(
+			w,
+			fmt.Errorf("this user already is exist, orderId=%s", httpRequest.UserId).Error(),
+			http.StatusInternalServerError,
+		)
 		return
 	}
 
@@ -37,10 +56,21 @@ func GetCreatedUserResponse(r *http.Request, w http.ResponseWriter, param UserRo
 		return
 	}
 
+	authToken, err := getAuthToken()
+	if err != nil {
+		http.Error(
+			w,
+			fmt.Errorf("can't generate user auth token: %w", err).Error(),
+			http.StatusInternalServerError,
+		)
+		return
+	}
+
 	var user models.User
 	user.Code = httpRequest.UserId
 	user.Role = httpRequest.Role
 	user.Title = httpRequest.Title
+	user.AuthToken = authToken
 	user.Description = httpRequest.Description
 	err = param.UserRepository.Save(user, permissions)
 	if err != nil {
@@ -50,6 +80,23 @@ func GetCreatedUserResponse(r *http.Request, w http.ResponseWriter, param UserRo
 
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(201)
+	jsonResponse, err := getJSONResponse("token", authToken)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	utils.LogErr(w.Write(jsonResponse))
+}
+
+func getJSONResponse(key string, value string) ([]byte, error) {
+	resp := make(map[string]string)
+	resp[key] = value
+	jsonResp, err := json.Marshal(resp)
+	if err != nil {
+		return jsonResp, fmt.Errorf("error happened in JSON marshal: %w", err)
+	}
+
+	return jsonResp, nil
 }
 
 func getUserPermissions(httpRequest *UserRequest, aRep interfaces.UserActionRepository) ([]models.UserPermission, error) {
@@ -74,6 +121,16 @@ func getUserPermissions(httpRequest *UserRequest, aRep interfaces.UserActionRepo
 	}
 
 	return permissions, nil
+}
+
+func getAuthToken() (string, error) {
+	uuidWithHyphen, err := uuid.NewRandom()
+	if err != nil {
+		return "", nil
+	}
+	uuid := strings.Replace(uuidWithHyphen.String(), "-", "", -1)
+
+	return uuid, nil
 }
 
 type ProductRequest struct {
