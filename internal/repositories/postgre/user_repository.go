@@ -50,18 +50,18 @@ func (u userRepository) Update(model models.User, permissions []models.UserPermi
 	if err != nil {
 		return err
 	}
-	defer func() {
+	defer func() error {
 		if err != nil {
-			tx.Rollback(u.context)
+			return tx.Rollback(u.context)
 		} else {
-			tx.Commit(u.context)
+			return tx.Commit(u.context)
 		}
 	}()
 
-	u.connection.QueryRow(
+	_, err = u.connection.Exec(
 		u.context,
-		"UPDATE ln_users SET role=$2, title=$3, auth_token=$4, description=$5, updated_at=NOW()) WHERE code=$1 AND deleted_at IS NULL",
-		&model.Code, &model.Role, &model.Title, &model.AuthToken, &model.Description,
+		"UPDATE ln_users SET role=$1, title=$2, auth_token=$3, description=$4, updated_at=NOW() WHERE code=$5 AND deleted_at IS NULL",
+		&model.Role, &model.Title, &model.AuthToken, &model.Description, &model.Code,
 	)
 	if err != nil {
 		return err

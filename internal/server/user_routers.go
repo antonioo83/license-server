@@ -15,8 +15,8 @@ func getCreateUserRoute(r *chi.Mux, params handlers.UserRouteParameters) *chi.Mu
 }
 
 func getUpdateUserRoute(r *chi.Mux, params handlers.UserRouteParameters) *chi.Mux {
-	r.Put("/", func(w http.ResponseWriter, r *http.Request) {
-		handlers.GetCreatedUserResponse(r, w, params)
+	r.Put("/api/v1/users", func(w http.ResponseWriter, r *http.Request) {
+		handlers.GetUpdatedUserResponse(r, w, params)
 	})
 
 	return r
