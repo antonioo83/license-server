@@ -161,8 +161,60 @@ func getCreateResponse(responses []LicenseResponse) ([]byte, error) {
 	return jsonResp, nil
 }
 
-func GetDeletedLicenseResponse(r *http.Request, w http.ResponseWriter, param LicenseRouteParameters) {
+type LicenseDeleteRequest struct {
+	CustomerId string `validate:"required,max=64"`
+	LicenseId  string `validate:"required,max=64"`
+}
 
+func GetDeletedLicenseResponse(r *http.Request, w http.ResponseWriter, param LicenseRouteParameters) {
+	httpRequest, err := getDeleteLicenseRequest(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	validate := validator.New()
+	err = validate.Struct(httpRequest)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	userAuth := r.Context().Value("userAuth").(*auth.UserAuth)
+
+	customer, err := param.CustomerRepository.FindByCode(userAuth.User.ID, httpRequest.CustomerId)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if customer == nil {
+		http.Error(
+			w,
+			fmt.Errorf("this customer isn't exist, customerId=%s", httpRequest.CustomerId).Error(),
+			http.StatusInternalServerError,
+		)
+		return
+	}
+
+	err = param.LicenseRepository.Delete(customer.ID, httpRequest.LicenseId)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Add("Content-Type", "application/json")
+	w.WriteHeader(http.StatusAccepted)
+}
+
+func getDeleteLicenseRequest(r *http.Request) (*LicenseDeleteRequest, error) {
+	var request LicenseDeleteRequest
+	decoder := json.NewDecoder(r.Body)
+	err := decoder.Decode(&request)
+	if err != nil {
+		return nil, fmt.Errorf("i can't decode json request: %w", err)
+	}
+
+	return &request, nil
 }
 
 func GetLicenseResponse(r *http.Request, w http.ResponseWriter, param LicenseRouteParameters) {

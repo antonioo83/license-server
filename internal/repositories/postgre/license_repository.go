@@ -2,6 +2,7 @@ package postgre
 
 import (
 	"context"
+	"errors"
 	"github.com/antonioo83/license-server/internal/models"
 	"github.com/antonioo83/license-server/internal/repositories/interfaces"
 	"github.com/jackc/pgx/v4"
@@ -55,4 +56,43 @@ func (l licenseRepository) DeleteAll(customerId int) error {
 	)
 
 	return err
+}
+
+func (l licenseRepository) Delete(customerId int, code string) error {
+	_, err := l.connection.Exec(
+		l.context,
+		"DELETE FROM ln_licenses WHERE customer_id=$1 AND code=$2",
+		customerId, code,
+	)
+
+	return err
+}
+
+func (l licenseRepository) FindByCode(code string) (*models.Licence, error) {
+	var model models.Licence
+	err := l.connection.QueryRow(
+		l.context,
+		`SELECT 
+			   id, customer_id, code, product_type, callback_url, count, license_key, registration_at, activation_at, 
+			   expiration_at, duration, description 
+			 FROM 
+			   ln_licenses 
+			 WHERE code=$1`,
+		code,
+	).Scan(&model.ID, &model.CustomerId, &model.Code, &model.ProductType, &model.CallbackUrl, &model.Count, &model.LicenseKey,
+		&model.RegistrationAt, &model.ActivationAt, &model.ExpirationAt, &model.Duration, &model.Description,
+	)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, nil
+	} else if err != nil {
+		return nil, err
+	}
+
+	return &model, nil
+}
+
+func (l licenseRepository) IsInDatabase(code string) (bool, error) {
+	model, err := l.FindByCode(code)
+
+	return !(model == nil), err
 }

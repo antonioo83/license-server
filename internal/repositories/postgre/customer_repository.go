@@ -2,6 +2,7 @@ package postgre
 
 import (
 	"context"
+	"errors"
 	"github.com/antonioo83/license-server/internal/models"
 	"github.com/antonioo83/license-server/internal/repositories/interfaces"
 	"github.com/jackc/pgx/v4"
@@ -60,17 +61,33 @@ func (c customerRepository) Replace(userId int, customer models.Customer, licens
 	return err
 }
 
-func (c customerRepository) Delete(code string) error {
+func (c customerRepository) Delete(userId int, code string) error {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (c customerRepository) FindByCode(code string) (*models.Customer, error) {
-	//TODO implement me
-	panic("implement me")
+func (c customerRepository) FindByCode(userId int, code string) (*models.Customer, error) {
+	var model models.Customer
+	err := c.connection.QueryRow(
+		c.context,
+		`SELECT 
+			   id, user_id, code, type, title, inn, description
+			 FROM 
+			   ln_customers 
+			 WHERE user_id=$1 AND code=$2 AND deleted_at IS NULL`,
+		userId, code,
+	).Scan(&model.ID, &model.UserID, &model.Code, &model.Type, &model.Title, &model.Inn, &model.Description)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, nil
+	} else if err != nil {
+		return nil, err
+	}
+
+	return &model, nil
 }
 
-func (c customerRepository) IsInDatabase(code string) (bool, error) {
-	//TODO implement me
-	panic("implement me")
+func (c customerRepository) IsInDatabase(userId int, code string) (bool, error) {
+	model, err := c.FindByCode(userId, code)
+
+	return !(model == nil), err
 }
