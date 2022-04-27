@@ -22,7 +22,7 @@ type RouteParameters struct {
 	UserPermissionRepository interfaces.UserPermissionRepository
 }
 
-func GetRouters(p RouteParameters) *chi.Mux {
+func GetRouters(p RouteParameters, lp handlers.LicenseRouteParameters) *chi.Mux {
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
@@ -62,6 +62,8 @@ func GetRouters(p RouteParameters) *chi.Mux {
 	r = getDeleteUserRoute(r, params)
 	r = getUserRoute(r, params)
 	r = getUsersRoute(r, params)
+
+	r = getReplaceLicenseRoute(r, lp)
 
 	return r
 }

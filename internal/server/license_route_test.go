@@ -21,33 +21,48 @@ import (
 	"testing"
 )
 
-type Product struct {
-	Type        string    `faker:"oneof: courier, waiter, pechka54, solo" json:"type,omitempty"`
-	Permissions [4]string `faker:"-" json:"permissions,omitempty"`
+type LicenseTest struct {
+	LicenseId    string `faker:"uuid_hyphenated" json:"licenseId,omitempty"`
+	ProductType  string `faker:"oneof: courier, waiter, pechka54, solo" json:"productType,omitempty"`
+	CallbackURL  string `faker:"url" json:"callbackUrl,omitempty"`
+	Count        int    `faker:"boundary_start=1, boundary_end=100" json:"count,omitempty"`
+	LicenseKey   string `faker:"uuid_hyphenated" json:"licenseKey,omitempty"`
+	ActivationAt string `faker:"timestamp" json:"activationAt,omitempty"`
+	ExpirationAt string `faker:"timestamp" json:"expirationAt,omitempty"`
+	Description  string `faker:"len=256" json:"description,omitempty"`
 }
 
-type RequestTest struct {
-	UserId      string     `faker:"uuid_hyphenated" json:"userId,omitempty"`
-	Role        string     `faker:"oneof: service,device" json:"role,omitempty"`
-	Title       string     `faker:"username" json:"title,omitempty"`
-	Description string     `faker:"len=256" json:"description,omitempty"`
-	Products    [1]Product `json:"products,omitempty"`
+type CustomerTest struct {
+	CustomerId  string         `faker:"uuid_hyphenated" json:"customerId,omitempty"`
+	Type        string         `faker:"oneof: device, service" json:"type,omitempty"`
+	Inn         string         `faker:"-" json:"inn,omitempty"`
+	Title       string         `faker:"username" json:"title,omitempty"`
+	Description string         `faker:"len=256" json:"description,omitempty"`
+	Licenses    [1]LicenseTest `json:"Licenses,omitempty"`
 }
 
-func TestGetRouters(t *testing.T) {
-	userTests := []struct {
+func TestCRUDLicenseRouters(t *testing.T) {
+	licenseTests := []struct {
 		url     string
-		request RequestTest
+		request CustomerTest
 	}{
 		{
-			url: "/api/v1/users",
-			request: RequestTest{
-				UserId: "",
-				Role:   "",
-				Title:  "",
-				Products: [1]Product{{
-					Type:        "",
-					Permissions: [4]string{"create", "update", "delete", "get"},
+			url: "/api/v1/licenses",
+			request: CustomerTest{
+				CustomerId:  "",
+				Type:        "",
+				Inn:         "",
+				Title:       "",
+				Description: "",
+				Licenses: [1]LicenseTest{{
+					LicenseId:    "",
+					ProductType:  "",
+					CallbackURL:  "",
+					Count:        0,
+					LicenseKey:   "",
+					ActivationAt: "",
+					ExpirationAt: "",
+					Description:  "",
 				}},
 			},
 		},
@@ -79,27 +94,28 @@ func TestGetRouters(t *testing.T) {
 	ts := httptest.NewServer(r)
 	defer ts.Close()
 
-	for _, tt := range userTests {
+	for _, tt := range licenseTests {
 		err := faker.FakeData(&tt.request)
 		if err != nil {
 			log.Fatal(err)
 		}
-		tt.request.Products[0].Permissions = [4]string{"create", "update", "delete", "get"}
+		tt.request.Inn = "1234567890"
 
-		request, err := getJSONRequest(tt.request)
+		request, err := getCustomerRequest(tt.request)
 		assert.NoError(t, err)
 
-		jsonRequest := getPostRequest(t, ts, tt.url, strings.NewReader(string(request)))
-		resp, _ := sendRequest(t, jsonRequest)
+		jsonRequest := getPostLicenseRequest(t, ts, tt.url, strings.NewReader(string(request)))
+		resp, _ := sendLicenseRequest(t, jsonRequest)
 		require.NoError(t, err)
 		assert.Equal(t, 201, resp.StatusCode)
 		if err := resp.Body.Close(); err != nil {
 			log.Fatal(err)
 		}
 	}
+
 }
 
-func getJSONRequest(request RequestTest) ([]byte, error) {
+func getCustomerRequest(request CustomerTest) ([]byte, error) {
 	jsonResp, err := json.Marshal(request)
 	if err != nil {
 		return []byte(""), fmt.Errorf("i can't decode json request: %w", err)
@@ -108,7 +124,7 @@ func getJSONRequest(request RequestTest) ([]byte, error) {
 	return jsonResp, nil
 }
 
-func getPostRequest(t *testing.T, ts *httptest.Server, path string, body io.Reader) *http.Request {
+func getPostLicenseRequest(t *testing.T, ts *httptest.Server, path string, body io.Reader) *http.Request {
 	req, err := http.NewRequest("POST", ts.URL+path, body)
 	req.Header.Add("Content-Type", "application/json")
 	require.NoError(t, err)
@@ -116,7 +132,7 @@ func getPostRequest(t *testing.T, ts *httptest.Server, path string, body io.Read
 	return req
 }
 
-func sendRequest(t *testing.T, req *http.Request) (*http.Response, string) {
+func sendLicenseRequest(t *testing.T, req *http.Request) (*http.Response, string) {
 	client := &http.Client{
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			return http.ErrUseLastResponse

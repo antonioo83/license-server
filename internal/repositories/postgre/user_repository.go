@@ -24,11 +24,11 @@ func (u userRepository) Save(user models.User, permissions []models.UserPermissi
 	if err != nil {
 		return err
 	}
-	defer func() {
+	defer func() error {
 		if err != nil {
-			tx.Rollback(u.context)
+			return tx.Rollback(u.context)
 		} else {
-			tx.Commit(u.context)
+			return tx.Commit(u.context)
 		}
 	}()
 
@@ -42,7 +42,9 @@ func (u userRepository) Save(user models.User, permissions []models.UserPermissi
 		return err
 	}
 
-	return u.permissionRep.MultipleInsert(lastInsertId, permissions)
+	err = u.permissionRep.MultipleInsert(lastInsertId, permissions)
+
+	return err
 }
 
 func (u userRepository) Update(model models.User, permissions []models.UserPermission) error {

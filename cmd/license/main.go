@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"github.com/antonioo83/license-server/config"
+	"github.com/antonioo83/license-server/internal/handlers"
 	"github.com/antonioo83/license-server/internal/repositories/factory"
 	"github.com/antonioo83/license-server/internal/server"
 	"github.com/jackc/pgx/v4/pgxpool"
@@ -14,7 +15,6 @@ func main() {
 	config := config.GetConfigSettings()
 	var pool *pgxpool.Pool
 	context := context.Background()
-
 	pool, _ = pgxpool.Connect(context, config.DatabaseDsn)
 	defer pool.Close()
 	userPermissionRepository := factory.NewUserPermissionRepository(context, pool)
@@ -25,6 +25,14 @@ func main() {
 			UserActionRepository:     factory.NewUserActionRepository(context, pool),
 			UserPermissionRepository: userPermissionRepository,
 		}
-	handler := server.GetRouters(routeParameters)
+
+	licenseRepository := factory.NewLicenseRepository(context, pool)
+	licenseRouteParameters :=
+		handlers.LicenseRouteParameters{
+			Config:             config,
+			CustomerRepository: factory.NewCustomerRepository(context, pool, licenseRepository),
+			LicenseRepository:  licenseRepository,
+		}
+	handler := server.GetRouters(routeParameters, licenseRouteParameters)
 	log.Fatal(http.ListenAndServe(config.ServerAddress, handler))
 }
