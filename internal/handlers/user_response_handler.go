@@ -284,8 +284,60 @@ func getDeleteRequest(r *http.Request) (*UserDeleteRequest, error) {
 	return &request, nil
 }
 
-func GetUserResponse(param UserRouteParameters) {
+type UserGetRequest struct {
+	UserId string `validate:"required,min=1,max=64"`
+}
 
+func GetUserResponse(r *http.Request, w http.ResponseWriter, param UserRouteParameters) {
+	httpRequest := getUserRequest(r)
+	validate := validator.New()
+	err := validate.Struct(httpRequest)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	user, err := param.UserRepository.FindFullUser(httpRequest.UserId)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Add("Content-Type", "application/json")
+	w.WriteHeader(200)
+	jsonResponse, err := getUserJsonResponse(getUserResponse(*user))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	utils.LogErr(w.Write(jsonResponse))
+}
+
+func getUserResponse(user models.User) UserResponse {
+	var users = make(map[int]models.User)
+	users[user.ID] = user
+	responses := getUsersResponses(&users)
+	for _, response := range responses {
+		return response
+	}
+
+	return UserResponse{}
+}
+
+func getUserRequest(r *http.Request) *UserGetRequest {
+	var request UserGetRequest
+	request.UserId = r.URL.Query().Get("userId")
+
+	return &request
+}
+
+func getUserJsonResponse(resp UserResponse) ([]byte, error) {
+	jsonResp, err := json.Marshal(resp)
+	if err != nil {
+		return jsonResp, fmt.Errorf("error happened in JSON marshal: %w", err)
+	}
+
+	return jsonResp, nil
 }
 
 type UsersGetRequest struct {
@@ -320,8 +372,24 @@ func GetUsersResponse(r *http.Request, w http.ResponseWriter, param UserRoutePar
 		return
 	}
 
+	users, err := param.UserRepository.FindFullUsers(1000, 0)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Add("Content-Type", "application/json")
+	w.WriteHeader(201)
+	jsonResponse, err := getUsersJsonResponse(getUsersResponses(users))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	utils.LogErr(w.Write(jsonResponse))
+}
+
+func getUsersResponses(users *map[int]models.User) []UserResponse {
 	var responses []UserResponse
-	users, err := param.UserRepository.FindALL(1000, 0)
 	for _, user := range *users {
 		var response UserResponse
 		response.UserId = user.Code
@@ -333,19 +401,11 @@ func GetUsersResponse(r *http.Request, w http.ResponseWriter, param UserRoutePar
 			productResponse.Type = permission.ProductType
 			productResponse.Permissions = append(productResponse.Permissions, permission.Action.Action)
 		}
-		//productResponse.Type = permission.ProductType
 		response.Products = append(response.Products, productResponse)
 		responses = append(responses, response)
 	}
 
-	w.Header().Add("Content-Type", "application/json")
-	w.WriteHeader(201)
-	jsonResponse, err := getUsersJsonResponse(responses)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	utils.LogErr(w.Write(jsonResponse))
+	return responses
 }
 
 func getUsersRequest(r *http.Request) (*UsersGetRequest, error) {

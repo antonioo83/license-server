@@ -115,11 +115,36 @@ func (u userRepository) FindByToken(code string) (*models.User, error) {
 	return &model, nil
 }
 
-func (u userRepository) FindALL(limit int, offset int) (*map[int]models.User, error) {
-	var users = make(map[int]models.User)
-	var model models.User
-	var permission models.UserPermission
-	var action models.UserAction
+func (u userRepository) FindFullUser(code string) (*models.User, error) {
+	rows, err := u.connection.Query(
+		u.context,
+		`SELECT 
+				u.id, u.code, u.role, u.title, u.description, 
+				p.user_id, p.product_type, a.action 
+			FROM ln_users u 
+			LEFT JOIN ln_user_permissions p ON user_id=u.id 
+			LEFT JOIN ln_user_actions a ON a.id=p.action_id
+			WHERE 
+  				u.code=$1 AND u.deleted_at IS NULL`,
+		code,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	users, err := getModels(rows)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, user := range users {
+		return &user, nil
+	}
+
+	return &models.User{}, nil
+}
+
+func (u userRepository) FindFullUsers(limit int, offset int) (*map[int]models.User, error) {
 	rows, err := u.connection.Query(
 		u.context,
 		`SELECT 
@@ -138,10 +163,23 @@ func (u userRepository) FindALL(limit int, offset int) (*map[int]models.User, er
 		return nil, err
 	}
 
+	users, err := getModels(rows)
+	if err != nil {
+		return nil, err
+	}
+
+	return &users, nil
+}
+
+func getModels(rows pgx.Rows) (map[int]models.User, error) {
+	var users = make(map[int]models.User)
+	var model models.User
+	var permission models.UserPermission
+	var action models.UserAction
 	var user = models.User{}
 	lastUserId := 0
 	for rows.Next() {
-		err = rows.Scan(
+		err := rows.Scan(
 			&model.ID, &model.Code, &model.Role, &model.Title, &model.Description, //&model.CreatedAt, &model.UpdatedAt,
 			&permission.UserID, &permission.ProductType, &action.Action,
 		)
@@ -171,7 +209,7 @@ func (u userRepository) FindALL(limit int, offset int) (*map[int]models.User, er
 		users[user.ID] = user
 	}
 
-	return &users, nil
+	return users, nil
 }
 
 func (u userRepository) IsInDatabase(code string) (bool, error) {
