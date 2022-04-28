@@ -79,7 +79,7 @@ func GetCreatedUserResponse(r *http.Request, w http.ResponseWriter, param UserRo
 	}
 
 	w.Header().Add("Content-Type", "application/json")
-	w.WriteHeader(201)
+	w.WriteHeader(http.StatusCreated)
 	jsonResponse, err := getJSONResponse("token", authToken)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -134,8 +134,8 @@ func getAuthToken() (string, error) {
 }
 
 type ProductRequest struct {
-	Type        string    `validate:"required,max=50"`
-	Permissions [4]string `validate:"required,oneof='create' 'update' 'delete' 'get'"`
+	Type        string   `validate:"required,max=50"`
+	Permissions []string `validate:"required,oneof='create' 'update' 'delete' 'get'"`
 }
 
 type UserRequest struct {
@@ -158,8 +158,74 @@ func getRequest(r *http.Request) (*UserRequest, error) {
 	return &request, nil
 }
 
-func GetUpdatedUserResponse(param UserRouteParameters) {
+func GetUpdatedUserResponse(r *http.Request, w http.ResponseWriter, param UserRouteParameters) {
+	httpRequest, err := getRequest(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
+	validate := validator.New()
+	err = validate.Struct(httpRequest)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	model, err := param.UserRepository.FindByCode(httpRequest.UserId)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if model == nil {
+		http.Error(
+			w,
+			fmt.Errorf("this user isn't exist, userId=%s", httpRequest.UserId).Error(),
+			http.StatusInternalServerError,
+		)
+		return
+	}
+
+	permissions, err := getUserPermissions(httpRequest, param.ActionRepository)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	authToken := model.AuthToken
+	if httpRequest.IsRegenerateToken {
+		authToken, err = getAuthToken()
+		if err != nil {
+			http.Error(
+				w,
+				fmt.Errorf("can't generate user auth token: %w", err).Error(),
+				http.StatusInternalServerError,
+			)
+			return
+		}
+	}
+
+	var user models.User
+	user.ID = model.ID
+	user.Code = httpRequest.UserId
+	user.Role = httpRequest.Role
+	user.Title = httpRequest.Title
+	user.AuthToken = authToken
+	user.Description = httpRequest.Description
+	err = param.UserRepository.Update(user, permissions)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Add("Content-Type", "application/json")
+	w.WriteHeader(http.StatusNoContent)
+	jsonResponse, err := getJSONResponse("token", authToken)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	utils.LogErr(w.Write(jsonResponse))
 }
 
 type UserDeleteRequest struct {
@@ -188,7 +254,7 @@ func GetDeletedUserResponse(r *http.Request, w http.ResponseWriter, param UserRo
 	if !isExist {
 		http.Error(
 			w,
-			fmt.Errorf("this user isn't exist, orderId=%s", httpRequest.UserId).Error(),
+			fmt.Errorf("this user isn't exist, userId=%s", httpRequest.UserId).Error(),
 			http.StatusInternalServerError,
 		)
 		return
