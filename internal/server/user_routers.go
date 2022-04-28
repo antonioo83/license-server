@@ -39,8 +39,8 @@ func getUserRoute(r *chi.Mux, params handlers.UserRouteParameters) *chi.Mux {
 }
 
 func getUsersRoute(r *chi.Mux, params handlers.UserRouteParameters) *chi.Mux {
-	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		handlers.GetCreatedUserResponse(r, w, params)
+	r.Get("/api/v1/users", func(w http.ResponseWriter, r *http.Request) {
+		handlers.GetUsersResponse(r, w, params)
 	})
 
 	return r

@@ -10,6 +10,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"net/http"
+	"strconv"
 	"strings"
 )
 
@@ -287,21 +288,22 @@ func GetUserResponse(param UserRouteParameters) {
 
 }
 
-type UserGetRequest struct {
-	UserId string `validate:"required,max=64"`
+type UsersGetRequest struct {
+	Limit  int `validate:"numeric"`
+	Offset int `validate:"numeric"`
 }
 
 type UserResponse struct {
-	UserId      string
-	Role        string
-	Title       string
-	Description string
-	Products    []ProductResponse
+	UserId      string            `json:"userId,omitempty"`
+	Role        string            `json:"role,omitempty"`
+	Title       string            `json:"title,omitempty"`
+	Description string            `json:"description,omitempty"`
+	Products    []ProductResponse `json:"products,omitempty"`
 }
 
 type ProductResponse struct {
-	Type        string
-	Permissions [4]string
+	Type        string   `json:"type,omitempty"`
+	Permissions []string `json:"permissions,omitempty"`
 }
 
 func GetUsersResponse(r *http.Request, w http.ResponseWriter, param UserRouteParameters) {
@@ -318,11 +320,27 @@ func GetUsersResponse(r *http.Request, w http.ResponseWriter, param UserRoutePar
 		return
 	}
 
-	param.UserRepository.FindALL(1000, 0)
+	var responses []UserResponse
+	users, err := param.UserRepository.FindALL(1000, 0)
+	for _, user := range *users {
+		var response UserResponse
+		response.UserId = user.Code
+		response.Role = user.Role
+		response.Title = user.Title
+		response.Description = user.Description
+		var productResponse ProductResponse
+		for _, permission := range user.Permissions {
+			productResponse.Type = permission.ProductType
+			productResponse.Permissions = append(productResponse.Permissions, permission.Action.Action)
+		}
+		//productResponse.Type = permission.ProductType
+		response.Products = append(response.Products, productResponse)
+		responses = append(responses, response)
+	}
 
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(201)
-	jsonResponse, err := getUsersJSONResponse()
+	jsonResponse, err := getUsersJsonResponse(responses)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -330,18 +348,26 @@ func GetUsersResponse(r *http.Request, w http.ResponseWriter, param UserRoutePar
 	utils.LogErr(w.Write(jsonResponse))
 }
 
-func getUsersRequest(r *http.Request) (*UserGetRequest, error) {
-	var request UserGetRequest
-	decoder := json.NewDecoder(r.Body)
-	err := decoder.Decode(&request)
+func getUsersRequest(r *http.Request) (*UsersGetRequest, error) {
+	var err error
+	var request UsersGetRequest
+	request.Limit, err = strconv.Atoi(r.URL.Query().Get("limit"))
 	if err != nil {
-		return nil, fmt.Errorf("i can't decode json request: %w", err)
+		return nil, err
+	}
+	if request.Limit == 0 {
+		request.Limit = 100
+	}
+
+	request.Offset, err = strconv.Atoi(r.URL.Query().Get("offset"))
+	if err != nil {
+		return nil, err
 	}
 
 	return &request, nil
 }
 
-func getUsersJSONResponse(resp UserResponse) ([]byte, error) {
+func getUsersJsonResponse(resp []UserResponse) ([]byte, error) {
 	jsonResp, err := json.Marshal(resp)
 	if err != nil {
 		return jsonResp, fmt.Errorf("error happened in JSON marshal: %w", err)

@@ -3,7 +3,6 @@ package postgre
 import (
 	"context"
 	"errors"
-	"github.com/antonioo83/license-server/internal/handlers"
 	"github.com/antonioo83/license-server/internal/models"
 	"github.com/antonioo83/license-server/internal/repositories/interfaces"
 	"github.com/jackc/pgx/v4"
@@ -116,36 +115,49 @@ func (u userRepository) FindByToken(code string) (*models.User, error) {
 	return &model, nil
 }
 
-func (u userRepository) FindALL(limit int, offset int) (*[]handlers.UserResponse, error) {
+func (u userRepository) FindALL(limit int, offset int) (*map[int]models.User, error) {
 	var users = make(map[int]models.User)
-	var user models.User
+	var model models.User
 	var permission models.UserPermission
 	var action models.UserAction
 	rows, err := u.connection.Query(
 		u.context,
-		"SELECT "+
-			"u.id, u.code, u.role, u.title, u.description, u.created_at, u.updated_at, "+
-			"p.user_id, p.productType, a.action "+
-			"FROM ln_users u "+
-			"LEFT JOIN ln_permissions p ON p.userId=u.id "+
-			"LEFT JOIN ln_actions a ON a.permissionId=p.id "+
-			"WHERE deleted_at IS NULL "+
-			"ORDER BY "+
-			"LIMIT $1 OFFSET $2",
+		`SELECT 
+				u.id, u.code, u.role, u.title, u.description, 
+				p.user_id, p.product_type, a.action 
+			FROM ln_users u 
+			LEFT JOIN ln_user_permissions p ON user_id=u.id 
+			LEFT JOIN ln_user_actions a ON a.id=p.action_id
+			WHERE 
+  				u.deleted_at IS NULL 
+			ORDER BY u.id ASC
+			LIMIT $1 OFFSET $2`,
 		limit, offset,
 	)
 	if err != nil {
 		return nil, err
 	}
-	isNew := true
+
+	var user = models.User{}
+	lastUserId := 0
 	for rows.Next() {
 		err = rows.Scan(
-			&user.ID, &user.Code, &user.Title, &user.Description, &user.CreatedAt, &user.UpdatedAt,
+			&model.ID, &model.Code, &model.Role, &model.Title, &model.Description, //&model.CreatedAt, &model.UpdatedAt,
 			&permission.UserID, &permission.ProductType, &action.Action,
 		)
 		if err != nil {
 			return nil, err
 		}
+
+		if lastUserId != model.ID {
+			user = models.User{}
+			user.ID = model.ID
+			user.Role = model.Role
+			user.Code = model.Code
+			user.Title = model.Title
+			user.Description = model.Description
+		}
+		lastUserId = model.ID
 
 		user.Permissions = append(
 			user.Permissions,
@@ -156,9 +168,10 @@ func (u userRepository) FindALL(limit int, offset int) (*[]handlers.UserResponse
 			},
 		)
 
+		users[user.ID] = user
 	}
 
-	return &models, nil
+	return &users, nil
 }
 
 func (u userRepository) IsInDatabase(code string) (bool, error) {
