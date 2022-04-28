@@ -11,4 +11,5 @@ type UserPermission struct {
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 	DeletedAt   time.Time
+	Action      UserAction
 }

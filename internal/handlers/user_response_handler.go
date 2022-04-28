@@ -221,6 +221,65 @@ func GetUserResponse(param UserRouteParameters) {
 
 }
 
-func GetUsersResponse(param UserRouteParameters) {
+type UserGetRequest struct {
+	UserId string `validate:"required,max=64"`
+}
 
+type UserResponse struct {
+	UserId      string
+	Role        string
+	Title       string
+	Description string
+	Products    []ProductResponse
+}
+
+type ProductResponse struct {
+	Type        string
+	Permissions [4]string
+}
+
+func GetUsersResponse(r *http.Request, w http.ResponseWriter, param UserRouteParameters) {
+	httpRequest, err := getUsersRequest(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	validate := validator.New()
+	err = validate.Struct(httpRequest)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	param.UserRepository.FindALL(1000, 0)
+
+	w.Header().Add("Content-Type", "application/json")
+	w.WriteHeader(201)
+	jsonResponse, err := getUsersJSONResponse()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	utils.LogErr(w.Write(jsonResponse))
+}
+
+func getUsersRequest(r *http.Request) (*UserGetRequest, error) {
+	var request UserGetRequest
+	decoder := json.NewDecoder(r.Body)
+	err := decoder.Decode(&request)
+	if err != nil {
+		return nil, fmt.Errorf("i can't decode json request: %w", err)
+	}
+
+	return &request, nil
+}
+
+func getUsersJSONResponse(resp UserResponse) ([]byte, error) {
+	jsonResp, err := json.Marshal(resp)
+	if err != nil {
+		return jsonResp, fmt.Errorf("error happened in JSON marshal: %w", err)
+	}
+
+	return jsonResp, nil
 }
