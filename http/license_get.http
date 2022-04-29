@@ -1,0 +1,3 @@
+GET http://localhost:8080/api/v1/license?customerId=6371863a-cb98-4847-8d77-c9b1cb983ced&licenseId=code2
+Content-Type: application/json
+Authorization:Bearer 54d1ba805e2a4891aeac9299b618945e

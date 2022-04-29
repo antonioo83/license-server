@@ -120,6 +120,7 @@ func getCustomerLicenses(httpRequest *CustomerRequest) ([]models.Licence, error)
 		license.ActivationAt = activationAt
 		license.ExpirationAt = expirationAt
 		license.Duration = int(expirationAt.Sub(activationAt).Hours() / 24)
+		license.Description = licenseRequest.Description
 		licences = append(licences, license)
 	}
 
@@ -217,8 +218,110 @@ func getDeleteLicenseRequest(r *http.Request) (*LicenseDeleteRequest, error) {
 	return &request, nil
 }
 
-func GetLicenseResponse(r *http.Request, w http.ResponseWriter, param LicenseRouteParameters) {
+type CustomerGetRequest struct {
+	CustomerId string `validate:"required,min=1,max=64"`
+	LicenseId  string `validate:"max=64"`
+}
 
+func GetLicenseResponse(r *http.Request, w http.ResponseWriter, param LicenseRouteParameters) {
+	httpRequest := getLicenseRequest(r)
+	validate := validator.New()
+	err := validate.Struct(httpRequest)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	userAuth := r.Context().Value("userAuth").(*auth.UserAuth)
+	customer, err := param.CustomerRepository.FindFull(userAuth.User.ID, httpRequest.CustomerId, httpRequest.LicenseId)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Add("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	jsonResponse, err := getLicenseJsonResponse(getCustomerResponse(*customer))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	utils.LogErr(w.Write(jsonResponse))
+}
+
+func getLicenseRequest(r *http.Request) *CustomerGetRequest {
+	var request CustomerGetRequest
+	request.CustomerId = r.URL.Query().Get("customerId")
+	request.LicenseId = r.URL.Query().Get("licenseId")
+
+	return &request
+}
+
+type LicenseGetResponse struct {
+	LicenseId    string `json:"licenseId"`
+	ProductType  string `json:"productType"`
+	CallbackURL  string `json:"CallbackUrl"`
+	Count        int    `json:"count"`
+	LicenseKey   string `json:"licenseKey"`
+	ActivationAt string `json:"activationAt"`
+	ExpirationAt string `json:"expirationAt"`
+	Description  string `json:"description"`
+}
+
+type CustomerGetResponse struct {
+	CustomerId  string               `json:"customerId"`
+	Type        string               `json:"type"`
+	Inn         string               `json:"inn"`
+	Title       string               `json:"title"`
+	Description string               `json:"description"`
+	Licenses    []LicenseGetResponse `json:"licenses"`
+}
+
+func getCustomerResponse(user models.Customer) CustomerGetResponse {
+	var customers = make(map[int]models.Customer)
+	customers[user.ID] = user
+	responses := getCustomerResponses(&customers)
+	for _, response := range responses {
+		return response
+	}
+
+	return CustomerGetResponse{}
+}
+
+func getCustomerResponses(customers *map[int]models.Customer) []CustomerGetResponse {
+	var responses []CustomerGetResponse
+	for _, customer := range *customers {
+		var response CustomerGetResponse
+		response.CustomerId = customer.Code
+		response.Type = customer.Type
+		response.Inn = customer.Inn
+		response.Title = customer.Title
+		response.Description = customer.Description
+		var licenseResponse LicenseGetResponse
+		for _, license := range customer.Licenses {
+			licenseResponse.LicenseId = license.Code
+			licenseResponse.ProductType = license.ProductType
+			licenseResponse.CallbackURL = license.CallbackUrl
+			licenseResponse.Count = license.Count
+			licenseResponse.LicenseKey = license.LicenseKey
+			licenseResponse.ActivationAt = license.ActivationAt.Format("2006-01-02 15:04:05")
+			licenseResponse.ExpirationAt = license.ExpirationAt.Format("2006-01-02 15:04:05")
+			licenseResponse.Description = license.Description
+			response.Licenses = append(response.Licenses, licenseResponse)
+		}
+		responses = append(responses, response)
+	}
+
+	return responses
+}
+
+func getLicenseJsonResponse(resp CustomerGetResponse) ([]byte, error) {
+	jsonResp, err := json.Marshal(resp)
+	if err != nil {
+		return jsonResp, fmt.Errorf("error happened in JSON marshal: %w", err)
+	}
+
+	return jsonResp, nil
 }
 
 func GetLicensesResponse(r *http.Request, w http.ResponseWriter, param LicenseRouteParameters) {

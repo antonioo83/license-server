@@ -64,6 +64,7 @@ func GetRouters(p RouteParameters, lp handlers.LicenseRouteParameters) *chi.Mux 
 	r = getUsersRoute(r, params)
 
 	r = getReplaceLicenseRoute(r, lp)
+	r = getLicenseRoute(r, lp)
 	r = getDeleteLicenseRoute(r, lp)
 
 	return r

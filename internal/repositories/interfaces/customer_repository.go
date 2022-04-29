@@ -7,4 +7,5 @@ type CustomerRepository interface {
 	Delete(userId int, code string) error
 	FindByCode(userId int, code string) (*models.Customer, error)
 	IsInDatabase(userId int, code string) (bool, error)
+	FindFull(userId int, customerCode string, licenseCode string) (*models.Customer, error)
 }

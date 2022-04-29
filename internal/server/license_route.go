@@ -23,7 +23,7 @@ func getDeleteLicenseRoute(r *chi.Mux, params handlers.LicenseRouteParameters) *
 }
 
 func getLicenseRoute(r *chi.Mux, params handlers.LicenseRouteParameters) *chi.Mux {
-	r.Get("/api/v1/licenses", func(w http.ResponseWriter, r *http.Request) {
+	r.Get("/api/v1/license", func(w http.ResponseWriter, r *http.Request) {
 		handlers.GetLicenseResponse(r, w, params)
 	})
 
