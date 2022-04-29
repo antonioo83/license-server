@@ -17,6 +17,10 @@ func main() {
 	context := context.Background()
 	pool, _ = pgxpool.Connect(context, config.DatabaseDsn)
 	defer pool.Close()
+
+	licenseRepository := factory.NewLicenseRepository(context, pool)
+	handlers.InitCallbackCronJob(config, licenseRepository)
+
 	userPermissionRepository := factory.NewUserPermissionRepository(context, pool)
 	routeParameters :=
 		server.RouteParameters{
@@ -25,8 +29,6 @@ func main() {
 			UserActionRepository:     factory.NewUserActionRepository(context, pool),
 			UserPermissionRepository: userPermissionRepository,
 		}
-
-	licenseRepository := factory.NewLicenseRepository(context, pool)
 	licenseRouteParameters :=
 		handlers.LicenseRouteParameters{
 			Config:             config,

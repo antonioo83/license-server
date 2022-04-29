@@ -9,6 +9,8 @@ require (
 	github.com/go-playground/validator/v10 v10.10.1
 	github.com/google/uuid v1.3.0
 	github.com/jackc/pgx/v4 v4.15.0
+	github.com/jinzhu/copier v0.3.5
+	github.com/robfig/cron/v3 v3.0.1
 	github.com/stretchr/testify v1.7.0
 	golang.org/x/net v0.0.0-20211112202133-69e39bad7dc2
 )

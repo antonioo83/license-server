@@ -35,7 +35,7 @@ func (l licenseRepository) MultipleReplace(customerId int, models []models.Licen
 					  expiration_at = excluded.expiration_at,  
 					  duration = excluded.duration, 
 					  description = excluded.description`,
-			customerId, model.Code, model.ProductType, model.CallbackUrl, model.Count, model.LicenseKey, model.ActivationAt,
+			customerId, model.Code, model.ProductType, model.CallbackURL, model.Count, model.LicenseKey, model.ActivationAt,
 			model.ExpirationAt, model.Duration, model.Description,
 		)
 	}
@@ -68,6 +68,55 @@ func (l licenseRepository) Delete(customerId int, code string) error {
 	return err
 }
 
+func (l licenseRepository) UpdateCallbackOptions(licenseId int, isSentCallback uint, callbackAttempts uint) error {
+	_, err := l.connection.Query(
+		l.context,
+		`UPDATE 
+			   ln_licenses
+			 SET 
+			   is_sent_callback=$1,
+			   callback_attempts=$2
+			 WHERE
+			   id=$3`,
+		&isSentCallback, &callbackAttempts, &licenseId,
+	)
+	return err
+}
+
+func (l licenseRepository) FindAllExpired(maxAttempts uint, limit uint, offset uint) ([]models.Licence, error) {
+	var model = models.Licence{}
+	var models []models.Licence
+	rows, err := l.connection.Query(
+		l.context,
+		`SELECT 
+			   l.id, l.customer_id, l.code, l.product_type, l.callback_url, l.callback_attempts, l.count, l.license_key, l.registration_at, l.activation_at, 
+			   l.expiration_at, l.duration, l.description, c.id, c.code, u.id, u.auth_token 
+			 FROM 
+			   ln_licenses l
+			 LEFT JOIN ln_customers c ON c.id=l.customer_id	
+			 LEFT JOIN ln_users u ON u.id=c.user_id
+			 WHERE
+			   callback_attempts < $1 AND is_sent_callback=0 AND expiration_at < NOW() AND u.deleted_at IS NULL
+			 LIMIT $2 OFFSET $3`,
+		maxAttempts, limit, offset,
+	)
+	if err != nil {
+		return nil, err
+	}
+	for rows.Next() {
+		err = rows.Scan(&model.ID, &model.CustomerId, &model.Code, &model.ProductType, &model.CallbackURL, &model.CallbackAttempts,
+			&model.Count, &model.LicenseKey, &model.RegistrationAt, &model.ActivationAt, &model.ExpirationAt, &model.Duration,
+			&model.Description, &model.Customer.ID, &model.Customer.Code, &model.Customer.User.ID, &model.Customer.User.AuthToken,
+		)
+		if err != nil {
+			return nil, err
+		}
+		models = append(models, model)
+	}
+
+	return models, nil
+}
+
 func (l licenseRepository) FindByCode(code string) (*models.Licence, error) {
 	var model models.Licence
 	err := l.connection.QueryRow(
@@ -79,7 +128,7 @@ func (l licenseRepository) FindByCode(code string) (*models.Licence, error) {
 			   ln_licenses 
 			 WHERE code=$1`,
 		code,
-	).Scan(&model.ID, &model.CustomerId, &model.Code, &model.ProductType, &model.CallbackUrl, &model.Count, &model.LicenseKey,
+	).Scan(&model.ID, &model.CustomerId, &model.Code, &model.ProductType, &model.CallbackURL, &model.Count, &model.LicenseKey,
 		&model.RegistrationAt, &model.ActivationAt, &model.ExpirationAt, &model.Duration, &model.Description,
 	)
 	if errors.Is(err, pgx.ErrNoRows) {

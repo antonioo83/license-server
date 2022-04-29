@@ -114,7 +114,7 @@ func getCustomerLicenses(httpRequest *CustomerRequest) ([]models.Licence, error)
 		var license models.Licence
 		license.Code = licenseRequest.LicenseId
 		license.ProductType = licenseRequest.ProductType
-		license.CallbackUrl = licenseRequest.CallbackURL
+		license.CallbackURL = licenseRequest.CallbackURL
 		license.Count = licenseRequest.Count
 		license.LicenseKey = licenseKey
 		license.ActivationAt = activationAt
@@ -260,7 +260,7 @@ func getLicenseRequest(r *http.Request) *CustomerGetRequest {
 type LicenseGetResponse struct {
 	LicenseId    string `json:"licenseId"`
 	ProductType  string `json:"productType"`
-	CallbackURL  string `json:"CallbackUrl"`
+	CallbackURL  string `json:"CallbackURL"`
 	Count        int    `json:"count"`
 	LicenseKey   string `json:"licenseKey"`
 	ActivationAt string `json:"activationAt"`
@@ -301,7 +301,7 @@ func getCustomerResponses(customers *map[int]models.Customer) []CustomerGetRespo
 		for _, license := range customer.Licenses {
 			licenseResponse.LicenseId = license.Code
 			licenseResponse.ProductType = license.ProductType
-			licenseResponse.CallbackURL = license.CallbackUrl
+			licenseResponse.CallbackURL = license.CallbackURL
 			licenseResponse.Count = license.Count
 			licenseResponse.LicenseKey = license.LicenseKey
 			licenseResponse.ActivationAt = license.ActivationAt.Format("2006-01-02 15:04:05")

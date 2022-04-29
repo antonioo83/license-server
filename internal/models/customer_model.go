@@ -14,4 +14,5 @@ type Customer struct {
 	UpdatedAt   time.Time
 	DeletedAt   time.Time
 	Licenses    []Licence
+	User        User
 }

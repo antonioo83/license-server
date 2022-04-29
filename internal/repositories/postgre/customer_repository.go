@@ -115,7 +115,7 @@ func getCustomerModels(rows pgx.Rows) (map[int]models.Customer, error) {
 	for rows.Next() {
 		err := rows.Scan(
 			&model.ID, &model.UserID, &model.Code, &model.Type, &model.Title, &model.Inn, &model.Description,
-			&licence.ProductType, &licence.CallbackUrl, &licence.Count, &licence.LicenseKey, &licence.RegistrationAt,
+			&licence.ProductType, &licence.CallbackURL, &licence.Count, &licence.LicenseKey, &licence.RegistrationAt,
 			&licence.ActivationAt, &licence.ExpirationAt, &licence.Duration, &licence.Description, &licence.Code,
 		)
 		if err != nil {
@@ -141,7 +141,7 @@ func getCustomerModels(rows pgx.Rows) (map[int]models.Customer, error) {
 				Code:           licence.Code,
 				CustomerId:     licence.CustomerId,
 				ProductType:    licence.ProductType,
-				CallbackUrl:    licence.CallbackUrl,
+				CallbackURL:    licence.CallbackURL,
 				Count:          licence.Count,
 				LicenseKey:     licence.LicenseKey,
 				RegistrationAt: licence.RegistrationAt,
