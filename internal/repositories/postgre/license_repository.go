@@ -97,6 +97,7 @@ func (l licenseRepository) FindAllExpired(maxAttempts uint, limit uint, offset u
 			 LEFT JOIN ln_users u ON u.id=c.user_id
 			 WHERE
 			   callback_attempts < $1 AND is_sent_callback=0 AND expiration_at < NOW() AND u.deleted_at IS NULL
+			 ORDER BY l.callback_attempts ASC
 			 LIMIT $2 OFFSET $3`,
 		maxAttempts, limit, offset,
 	)
