@@ -47,7 +47,7 @@ func TestCRUDLicenseRouters(t *testing.T) {
 		request CustomerTest
 	}{
 		{
-			url: "/api/v1/licenses",
+			url: "/api/v1/licenses/replace",
 			request: CustomerTest{
 				CustomerId:  "",
 				Type:        "",
@@ -104,7 +104,7 @@ func TestCRUDLicenseRouters(t *testing.T) {
 		request, err := getCustomerRequest(tt.request)
 		assert.NoError(t, err)
 
-		jsonRequest := getPostLicenseRequest(t, ts, tt.url, strings.NewReader(string(request)))
+		jsonRequest := getPostLicenseRequest(t, ts, tt.url, strings.NewReader(string(request)), config.Auth.AdminAuthToken)
 		resp, _ := sendLicenseRequest(t, jsonRequest)
 		require.NoError(t, err)
 		assert.Equal(t, 201, resp.StatusCode)
@@ -124,9 +124,11 @@ func getCustomerRequest(request CustomerTest) ([]byte, error) {
 	return jsonResp, nil
 }
 
-func getPostLicenseRequest(t *testing.T, ts *httptest.Server, path string, body io.Reader) *http.Request {
+func getPostLicenseRequest(t *testing.T, ts *httptest.Server, path string, body io.Reader, token string) *http.Request {
 	req, err := http.NewRequest("POST", ts.URL+path, body)
+	require.NoError(t, err)
 	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Authorization", "Bearer "+token)
 	require.NoError(t, err)
 
 	return req

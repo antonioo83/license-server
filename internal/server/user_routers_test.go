@@ -89,7 +89,7 @@ func TestGetRouters(t *testing.T) {
 		request, err := getJSONRequest(tt.request)
 		assert.NoError(t, err)
 
-		jsonRequest := getPostRequest(t, ts, tt.url, strings.NewReader(string(request)))
+		jsonRequest := getPostRequest(t, ts, tt.url, strings.NewReader(string(request)), config.Auth.AdminAuthToken)
 		resp, _ := sendRequest(t, jsonRequest)
 		require.NoError(t, err)
 		assert.Equal(t, 201, resp.StatusCode)
@@ -108,9 +108,10 @@ func getJSONRequest(request RequestTest) ([]byte, error) {
 	return jsonResp, nil
 }
 
-func getPostRequest(t *testing.T, ts *httptest.Server, path string, body io.Reader) *http.Request {
+func getPostRequest(t *testing.T, ts *httptest.Server, path string, body io.Reader, token string) *http.Request {
 	req, err := http.NewRequest("POST", ts.URL+path, body)
 	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Authorization", "Bearer "+token)
 	require.NoError(t, err)
 
 	return req
