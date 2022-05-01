@@ -5,3 +5,5 @@
 3. Run tests in the "server" directory;
 4. The project has enough ready http commands for test in the "http" folder.
 
+P.S. Technical requirement link: https://docs.google.com/document/d/17EvmVKy9PG9MQXXki4vHOqH9tmmHZHLs273cMwiCW1s/edit#heading=h.mqipht3nuuqd
+
