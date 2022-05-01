@@ -3,7 +3,7 @@ package server
 import (
 	"compress/flate"
 	"github.com/antonioo83/license-server/config"
-	handlers "github.com/antonioo83/license-server/internal/handlers"
+	"github.com/antonioo83/license-server/internal/handlers"
 	"github.com/antonioo83/license-server/internal/handlers/auth"
 	"github.com/antonioo83/license-server/internal/handlers/auth/factory"
 	"github.com/antonioo83/license-server/internal/repositories/interfaces"

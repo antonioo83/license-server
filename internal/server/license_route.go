@@ -29,11 +29,3 @@ func getLicenseRoute(r *chi.Mux, params handlers.LicenseRouteParameters) *chi.Mu
 
 	return r
 }
-
-func getLicensesRoute(r *chi.Mux, params handlers.LicenseRouteParameters) *chi.Mux {
-	r.Get("/api/v1/licenses", func(w http.ResponseWriter, r *http.Request) {
-		handlers.GetLicensesResponse(r, w, params)
-	})
-
-	return r
-}

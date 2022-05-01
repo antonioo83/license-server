@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"github.com/antonioo83/license-server/config"
 	"github.com/antonioo83/license-server/internal/handlers"
 	"github.com/antonioo83/license-server/internal/repositories/factory"
@@ -19,7 +20,10 @@ func main() {
 	defer pool.Close()
 
 	licenseRepository := factory.NewLicenseRepository(context, pool)
-	handlers.InitCallbackCronJob(config.Callback, licenseRepository)
+	err := handlers.InitCallbackCronJob(config.Callback, licenseRepository)
+	if err != nil {
+		fmt.Println("i can't run send callback job: " + err.Error())
+	}
 
 	userPermissionRepository := factory.NewUserPermissionRepository(context, pool)
 	routeParameters :=

@@ -17,7 +17,7 @@ import (
 
 func InitCallbackCronJob(config config.Callback, licenseRep interfaces.LicenseRepository) error {
 	cronHandler := cron.New(cron.WithSeconds())
-	cronHandler.AddFunc(config.CronSpec, func() {
+	_, err := cronHandler.AddFunc(config.CronSpec, func() {
 		licenses, err := licenseRep.FindAllExpired(config.MaxAttempts, config.LimitUnitOfTime, 0)
 		if err != nil {
 			log.Printf("I can't get licenses for send callbacks: %v", err)
@@ -30,6 +30,10 @@ func InitCallbackCronJob(config config.Callback, licenseRep interfaces.LicenseRe
 		}
 		runSendCallbackWorker(callbackRequests, licenseRep)
 	})
+	if err != nil {
+
+		return err
+	}
 
 	cronHandler.Start()
 
@@ -71,7 +75,7 @@ func getLicenseCallbackRequests(licences []models.Licence) ([]LicenseCallbackReq
 
 func runSendCallbackWorker(sendCallbacks []LicenseCallbackRequest, licenseRep interfaces.LicenseRepository) {
 	for _, sendCallback := range sendCallbacks {
-		go func() {
+		go func(sendCallback LicenseCallbackRequest, licenseRep interfaces.LicenseRepository) {
 			httpStatus, err := sendRequest(sendCallback)
 			if err != nil {
 				fmt.Printf("i can't send callback request: %v\n", err)
@@ -90,7 +94,7 @@ func runSendCallbackWorker(sendCallbacks []LicenseCallbackRequest, licenseRep in
 				}
 				return
 			}
-		}()
+		}(sendCallback, licenseRep)
 	}
 
 	return

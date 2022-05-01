@@ -323,7 +323,3 @@ func getLicenseJsonResponse(resp CustomerGetResponse) ([]byte, error) {
 
 	return jsonResp, nil
 }
-
-func GetLicensesResponse(r *http.Request, w http.ResponseWriter, param LicenseRouteParameters) {
-
-}
