@@ -15,10 +15,10 @@ import (
 	"time"
 )
 
-func InitCallbackCronJob(config config.Config, licenseRep interfaces.LicenseRepository) error {
+func InitCallbackCronJob(config config.Callback, licenseRep interfaces.LicenseRepository) error {
 	cronHandler := cron.New(cron.WithSeconds())
-	cronHandler.AddFunc("1 * * * * *", func() {
-		licenses, err := licenseRep.FindAllExpired(3, 50, 0)
+	cronHandler.AddFunc(config.CronSpec, func() {
+		licenses, err := licenseRep.FindAllExpired(config.MaxAttempts, config.LimitUnitOfTime, 0)
 		if err != nil {
 			log.Printf("I can't get licenses for send callbacks: %v", err)
 			return

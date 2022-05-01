@@ -19,7 +19,7 @@ func main() {
 	defer pool.Close()
 
 	licenseRepository := factory.NewLicenseRepository(context, pool)
-	handlers.InitCallbackCronJob(config, licenseRepository)
+	handlers.InitCallbackCronJob(config.Callback, licenseRepository)
 
 	userPermissionRepository := factory.NewUserPermissionRepository(context, pool)
 	routeParameters :=
