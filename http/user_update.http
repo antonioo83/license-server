@@ -5,8 +5,8 @@ Authorization:Bearer 54d1ba805e2a4891aeac9299b618945e
 {
   "userId": "909fdfea-fff1-4dd5-97f7-612cf9840b-1",
   "role": "device",
-  "title": "Solo title",
-  "description": "solo description",
+  "title": "Solo application",
+  "description": "Evotor solo application",
   "isRegenerateToken": false,
   "products": [
     {
