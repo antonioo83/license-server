@@ -1,0 +1,15 @@
+POST http://api-courier-ireca-test.ireca.site/api/v1/clients/test
+Content-Type: application/json
+Authorization:Bearer 54d1ba805e2a4891aeac9299b618945e
+
+{
+  "customerId": "6371863a-cb98-4847-8d77-c9b1cb983ced",
+  "licenseId": "54c511dd-e4e9-4bd3-bf27-e0380d8eeda2",
+  "productType": "waiter",
+  "callbackUrl": "http://sHnCZMi.biz/YRoACmF",
+  "count": 44,
+  "licenseKey": "c243a9d2-37f1-4c5c-8653-b3272c095def",
+  "activationAt": "1988-12-01 09:58:09",
+  "expirationAt": "1999-07-17 01:14:17",
+  "description": "lkCHCxCgPNRBWTQJKwelJqEKxLHVYaRRGBdkiHEyEAoRHjIjZfsSXmQNtNcssWwokPShyLHVvqZLyGMVUqGcrCCxOMdgNGPaaZJwIOnIYcuSNkDJhRRRApjBqNbQacJSfOgNrxKIMkApSMaJawoXpduqMjWYAMTGcdENeJepOnaYXWtraDKWNpZyxHWiBtiaMknLEsXVBTMEtNxHAFkhhFdHSOeGiMyfPsIHxPOKtCJOHPdPIVetiPRVskDkTOYS"
+}

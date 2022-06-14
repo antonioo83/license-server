@@ -1,14 +1,17 @@
 package models
 
+import "time"
+
 type User struct {
 	ID          int
 	Code        string
-	Role        int
+	Role        string
 	Title       string
 	AuthToken   string
 	Action      string
 	Description string
-	CreatedAt   string
-	UpdatedAt   string
-	DeletedAt   string
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+	DeletedAt   time.Time
+	Permissions []UserPermission
 }

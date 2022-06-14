@@ -1,10 +1,12 @@
 package models
 
+import "time"
+
 type UserAction struct {
 	ID          int
 	Action      string
 	Description string
-	CreatedAt   string
-	UpdatedAt   string
-	DeletedAt   string
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+	DeletedAt   time.Time
 }

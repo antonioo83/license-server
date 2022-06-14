@@ -1,5 +1,7 @@
 package models
 
+import "time"
+
 type Customer struct {
 	ID          int
 	UserID      int
@@ -8,7 +10,9 @@ type Customer struct {
 	Title       string
 	Inn         string
 	Description string
-	CreatedAt   string
-	UpdatedAt   string
-	DeletedAt   string
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+	DeletedAt   time.Time
+	Licenses    []Licence
+	User        User
 }
