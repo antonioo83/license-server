@@ -12,6 +12,7 @@ import (
 	"github.com/google/uuid"
 	"net/http"
 	"strings"
+	"time"
 )
 
 type LicenseRouteParameters struct {
@@ -93,12 +94,12 @@ func GetReplacedLicenseResponse(r *http.Request, w http.ResponseWriter, param Li
 func getCustomerLicenses(httpRequest *CustomerRequest) ([]models.Licence, error) {
 	var licences []models.Licence
 	for _, licenseRequest := range httpRequest.Licenses {
-		activationAt, err := utils.GetTimeFromStr(licenseRequest.ActivationAt)
+		activationAt, err := getTimeFromStr(licenseRequest.ActivationAt)
 		if err != nil {
 			return nil, err
 		}
 
-		expirationAt, err := utils.GetTimeFromStr(licenseRequest.ExpirationAt)
+		expirationAt, err := getTimeFromStr(licenseRequest.ExpirationAt)
 		if err != nil {
 			return nil, err
 		}
@@ -125,6 +126,16 @@ func getCustomerLicenses(httpRequest *CustomerRequest) ([]models.Licence, error)
 	}
 
 	return licences, nil
+}
+
+func getTimeFromStr(dateTime string) (time.Time, error) {
+	layout := "2006-01-02 15:04:05"
+	time, err := time.Parse(layout, dateTime)
+	if err != nil {
+		return time, err
+	}
+
+	return time, nil
 }
 
 func getLicenseKey() (string, error) {
