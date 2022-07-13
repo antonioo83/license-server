@@ -14,7 +14,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -81,9 +80,7 @@ func TestGetRouters(t *testing.T) {
 
 	for _, tt := range userTests {
 		err := faker.FakeData(&tt.request)
-		if err != nil {
-			log.Fatal(err)
-		}
+		assert.NoError(t, err)
 		tt.request.Products[0].Permissions = [4]string{"create", "update", "delete", "get"}
 
 		request, err := getJSONRequest(tt.request)
@@ -93,9 +90,8 @@ func TestGetRouters(t *testing.T) {
 		resp, _ := sendRequest(t, jsonRequest)
 		require.NoError(t, err)
 		assert.Equal(t, 201, resp.StatusCode)
-		if err := resp.Body.Close(); err != nil {
-			log.Fatal(err)
-		}
+		resp.Body.Close()
+		assert.NoError(t, err)
 	}
 }
 

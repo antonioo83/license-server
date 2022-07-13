@@ -14,7 +14,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -96,9 +95,8 @@ func TestCRUDLicenseRouters(t *testing.T) {
 
 	for _, tt := range licenseTests {
 		err := faker.FakeData(&tt.request)
-		if err != nil {
-			log.Fatal(err)
-		}
+		assert.NoError(t, err)
+
 		tt.request.Inn = "1234567890"
 
 		request, err := getCustomerRequest(tt.request)
@@ -108,9 +106,8 @@ func TestCRUDLicenseRouters(t *testing.T) {
 		resp, _ := sendLicenseRequest(t, jsonRequest)
 		require.NoError(t, err)
 		assert.Equal(t, 201, resp.StatusCode)
-		if err := resp.Body.Close(); err != nil {
-			log.Fatal(err)
-		}
+		err = resp.Body.Close()
+		assert.NoError(t, err)
 	}
 
 }
