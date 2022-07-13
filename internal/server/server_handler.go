@@ -28,7 +28,7 @@ func GetRouters(p RouteParameters, lp handlers.LicenseRouteParameters) *chi.Mux 
 	r.Use(middleware.RealIP)
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
-	r.Use(middleware.Timeout(60 * time.Second))
+	r.Use(middleware.Timeout(time.Duration(p.Config.RequestTimeoutSec) * time.Second))
 	compressor := middleware.NewCompressor(flate.DefaultCompression)
 	r.Use(compressor.Handler)
 
