@@ -8,6 +8,7 @@ import (
 	authFactory "github.com/antonioo83/license-server/internal/handlers/auth/factory"
 	"github.com/antonioo83/license-server/internal/repositories/factory"
 	"github.com/antonioo83/license-server/internal/server"
+	"github.com/antonioo83/license-server/internal/services"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"log"
 	"net/http"
@@ -21,7 +22,8 @@ func main() {
 	defer pool.Close()
 
 	licenseRepository := factory.NewLicenseRepository(context, pool)
-	err := handlers.InitCallbackCronJob(config.Callback, licenseRepository)
+	licenseCallbackService := services.NewLicenseCallbackService(config.Callback, licenseRepository)
+	err := handlers.InitCallbackCronJob(config.Callback, licenseCallbackService)
 	if err != nil {
 		fmt.Println("i can't run send callback job: " + err.Error())
 	}
