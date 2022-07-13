@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/antonioo83/license-server/config"
 	"github.com/antonioo83/license-server/internal/handlers"
+	authFactory "github.com/antonioo83/license-server/internal/handlers/auth/factory"
 	"github.com/antonioo83/license-server/internal/repositories/factory"
 	"github.com/antonioo83/license-server/internal/utils"
 	"github.com/bxcodec/faker/v3"
@@ -74,10 +75,12 @@ func TestCRUDLicenseRouters(t *testing.T) {
 	pool, _ = pgxpool.Connect(context, config.DatabaseDsn)
 	defer pool.Close()
 	userPermissionRepository := factory.NewUserPermissionRepository(context, pool)
+	userRepository := factory.NewUserRepository(context, pool, userPermissionRepository)
+	userAuthHandler := authFactory.NewUserAuthHandler(userRepository, config)
 	routeParameters :=
 		RouteParameters{
 			Config:                   config,
-			UserRepository:           factory.NewUserRepository(context, pool, userPermissionRepository),
+			UserRepository:           userRepository,
 			UserActionRepository:     factory.NewUserActionRepository(context, pool),
 			UserPermissionRepository: userPermissionRepository,
 		}
@@ -89,7 +92,7 @@ func TestCRUDLicenseRouters(t *testing.T) {
 			CustomerRepository: factory.NewCustomerRepository(context, pool, licenseRepository),
 			LicenseRepository:  licenseRepository,
 		}
-	r := GetRouters(routeParameters, licenseRouteParameters)
+	r := GetRouters(userAuthHandler, routeParameters, licenseRouteParameters)
 	ts := httptest.NewServer(r)
 	defer ts.Close()
 

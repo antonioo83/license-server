@@ -5,7 +5,6 @@ import (
 	"github.com/antonioo83/license-server/config"
 	"github.com/antonioo83/license-server/internal/handlers"
 	"github.com/antonioo83/license-server/internal/handlers/auth"
-	"github.com/antonioo83/license-server/internal/handlers/auth/factory"
 	"github.com/antonioo83/license-server/internal/repositories/interfaces"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -22,7 +21,7 @@ type RouteParameters struct {
 	UserPermissionRepository interfaces.UserPermissionRepository
 }
 
-func GetRouters(p RouteParameters, lp handlers.LicenseRouteParameters) *chi.Mux {
+func GetRouters(uh *auth.UserAuthHandler, p RouteParameters, lp handlers.LicenseRouteParameters) *chi.Mux {
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
@@ -34,7 +33,6 @@ func GetRouters(p RouteParameters, lp handlers.LicenseRouteParameters) *chi.Mux 
 
 	r.Use(func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			uh := factory.NewUserAuthHandler(p.UserRepository, p.Config)
 			token := uh.GetToken(r)
 			userAuth, err := uh.GetAuthUser(token)
 			if err != nil {
