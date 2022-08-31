@@ -10,6 +10,7 @@ import (
 	"github.com/antonioo83/license-server/internal/utils"
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
+	"github.com/jinzhu/copier"
 	"net/http"
 	"strings"
 	"time"
@@ -113,15 +114,21 @@ func getCustomerLicenses(httpRequest *CustomerRequest) ([]models.Licence, error)
 		}
 
 		var license models.Licence
-		license.Code = licenseRequest.LicenseId
-		license.ProductType = licenseRequest.ProductType
-		license.CallbackURL = licenseRequest.CallbackURL
-		license.Count = licenseRequest.Count
-		license.LicenseKey = licenseKey
+		//license.Code = licenseRequest.LicenseId
+		//license.ProductType = licenseRequest.ProductType
+		//license.CallbackURL = licenseRequest.CallbackURL
+		//license.Count = licenseRequest.Count
+		//license.LicenseKey = licenseKey
+
+		//license.Description = licenseRequest.Description
+		err = copier.Copy(&license, &licenseRequest)
 		license.ActivationAt = activationAt
 		license.ExpirationAt = expirationAt
 		license.Duration = int(expirationAt.Sub(activationAt).Hours() / 24)
-		license.Description = licenseRequest.Description
+		if err != nil {
+			return nil, err
+		}
+
 		licences = append(licences, license)
 	}
 

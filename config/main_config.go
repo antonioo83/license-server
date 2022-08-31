@@ -31,7 +31,7 @@ var cfg Config
 func GetConfigSettings() Config {
 	const (
 		ServerAddress           = ":8080"
-		DatabaseDSN             = "postgres://postgres:433370@localhost:5433/license_server"
+		DatabaseDSN             = "postgres://postgres:433370@localhost:5432/license_server"
 		RequestTimeoutSec       = 60
 		AdminAuthToken          = "54d1ba805e2a4891aeac9299b618945e"
 		CallbackMaxAttempts     = 3
